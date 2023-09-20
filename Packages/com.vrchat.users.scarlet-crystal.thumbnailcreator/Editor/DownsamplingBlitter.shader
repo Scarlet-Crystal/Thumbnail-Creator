@@ -1,4 +1,4 @@
-﻿Shader "ThumbnailCreator/SupersamplingBlitter"
+﻿Shader "ThumbnailCreator/DownsamplingBlitter"
 {
     Properties
     {

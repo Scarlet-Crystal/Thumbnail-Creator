@@ -129,7 +129,7 @@ namespace ThumbnailUtilities
                 cam.targetTexture = supersampleBuffer;
                 cam.Render();
 
-                var blitMat = new Material(Shader.Find("ThumbnailCreator/SupersamplingBlitter"))
+                var blitMat = new Material(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
                 {
                     shaderKeywords = new string[] { selectedParams.Item2 }
                 };
