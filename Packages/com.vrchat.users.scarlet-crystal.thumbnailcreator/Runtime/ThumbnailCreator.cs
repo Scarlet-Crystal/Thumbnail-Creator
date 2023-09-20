@@ -16,9 +16,10 @@ namespace ThumbnailUtilities
     [RequireComponent(typeof(Camera))]
     public class ThumbnailCreator : MonoBehaviour, IEditorOnly
     {
-        [Tooltip("Supersample level.\nLow should be sufficient for most scenes."
-        + "\nHigher levels will use more VRAM, with Ultra potentially requiring several gigabytes of VRAM. \n"
-        +"Use None if you wish to use MSAA or postprocessing-based antialiasing instead.")]
+        [Tooltip("Supersample level."
+        + "\nHigher levels will use more VRAM, with Ultra potentially requiring several gigabytes of VRAM."
+        + "\nNone will disable supersampling. Use this option if you wish to use MSAA or"
+        + " postprocessing-based antialiasing instead.")]
         public SSAAQuality supersampleLevel = SSAAQuality.Low;
     }
 }
