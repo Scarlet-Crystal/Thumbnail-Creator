@@ -19,7 +19,6 @@ namespace ThumbnailUtilities
         {
             //Render scale, Shaderkeyword, allow MSAA/postprocessing-based antialiasing
             Tuple.Create(1,    "_SSAAx1", true ),
-            Tuple.Create(4,   "_SSAAx16", false),
             Tuple.Create(6,   "_SSAAx36", false),
             Tuple.Create(8,   "_SSAAx64", false),
             Tuple.Create(12, "_SSAAx144", false)

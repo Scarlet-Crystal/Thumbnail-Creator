@@ -16,7 +16,7 @@
             #pragma vertex vertexProgram
             #pragma fragment fragmentProgram
             #pragma target 3.5
-            #pragma multi_compile _SSAAx1 _SSAAx16 _SSAAx36 _SSAAx64 _SSAAx144
+            #pragma multi_compile _SSAAx1 _SSAAx36 _SSAAx64 _SSAAx144
 
             #include "UnityCG.cginc"
             
@@ -26,8 +26,6 @@
                 #define SIDE_LENGTH 8
             #elif defined(_SSAAx36)
                 #define SIDE_LENGTH 6
-            #elif defined(_SSAAx16)
-                #define SIDE_LENGTH 4
             #elif defined(_SSAAx1)
                 #define SIDE_LENGTH 1
             #else
