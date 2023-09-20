@@ -110,6 +110,7 @@ namespace ThumbnailUtilities
             // Debug.Log($"SupersampleBuffer size: {supersampleBuffer.width}x{supersampleBuffer.height}");
 
             GameObject renderer = Instantiate(thumbnailCreator.gameObject);
+            var lastRT = RenderTexture.active;
 
             try
             {
@@ -141,7 +142,7 @@ namespace ThumbnailUtilities
             finally
             {
                 DestroyImmediate(renderer);
-                RenderTexture.active = null;
+                RenderTexture.active = lastRT;
 
                 thumbnail.Release();
                 supersampleBuffer.Release();
