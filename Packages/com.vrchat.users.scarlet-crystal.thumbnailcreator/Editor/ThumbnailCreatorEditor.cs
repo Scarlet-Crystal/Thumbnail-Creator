@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -14,14 +15,26 @@ namespace ThumbnailUtilities
     [CustomEditor(typeof(ThumbnailCreator))]
     class ThumbnailCreatorEditor : Editor
     {
-        //Keep the order and size of this array in sync with the SSAAQuality enum
-        private static readonly Tuple<int, string, bool>[] QualityParams = new Tuple<int, string, bool>[]
+        readonly struct QualityParameters
         {
-            //Render scale, Shaderkeyword, allow MSAA/postprocessing-based antialiasing
-            Tuple.Create(1,    "_SSAAx1", true ),
-            Tuple.Create(6,   "_SSAAx36", false),
-            Tuple.Create(8,   "_SSAAx64", false),
-            Tuple.Create(12, "_SSAAx144", false)
+            public readonly int renderScale;
+            public readonly string blitterKeyword;
+            public readonly bool allowAntialiasing;
+
+            public QualityParameters(int renderScale, string blitterKeyword, bool allowAntialiasing)
+            {
+                this.renderScale = renderScale;
+                this.blitterKeyword = blitterKeyword;
+                this.allowAntialiasing = allowAntialiasing;
+            }
+        }
+
+        private static readonly Dictionary<SSAAQuality, QualityParameters> QualityPresets = new Dictionary<SSAAQuality, QualityParameters>()
+        {
+            { SSAAQuality.None, new QualityParameters(1, "_SSAAx1", true) },
+            { SSAAQuality.Low, new QualityParameters(6, "_SSAAx36", false) },
+            { SSAAQuality.Medium, new QualityParameters(8, "_SSAAx64", false) },
+            { SSAAQuality.High, new QualityParameters(12, "_SSAAx144", false) }
         };
 
         [MenuItem("GameObject/Thumbnail Creator", priority = 10)]
@@ -60,7 +73,6 @@ namespace ThumbnailUtilities
                     {
                         Texture2D thumbnail = RenderThumbnail(thumbnailCreator);
 
-                        savePath = Path.GetFullPath(savePath);
                         File.WriteAllBytes(savePath, thumbnail.EncodeToPNG());
 
                         AssetDatabase.Refresh();
@@ -76,7 +88,7 @@ namespace ThumbnailUtilities
 
         private Texture2D RenderThumbnail(ThumbnailCreator thumbnailCreator)
         {
-            var selectedParams = QualityParams[(int)thumbnailCreator.supersampleLevel];
+            var selectedParams = QualityPresets[thumbnailCreator.supersampleLevel];
 
             RenderTexture thumbnail = new RenderTexture(
                 new RenderTextureDescriptor(1200, 900)
@@ -86,8 +98,8 @@ namespace ThumbnailUtilities
                 }
             );
 
-            int supersampleWidth = thumbnail.width * selectedParams.Item1;
-            int supersampleHeight = thumbnail.height * selectedParams.Item1;
+            int supersampleWidth = thumbnail.width * selectedParams.renderScale;
+            int supersampleHeight = thumbnail.height * selectedParams.renderScale;
 
             if (supersampleWidth > SystemInfo.maxTextureSize || supersampleHeight > SystemInfo.maxTextureSize)
             {
@@ -99,7 +111,7 @@ namespace ThumbnailUtilities
                 {
                     depthBufferBits = 32,
                     graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
-                    msaaSamples = selectedParams.Item3 ? 8 : 1
+                    msaaSamples = 8
                 }
             )
             {
@@ -108,14 +120,14 @@ namespace ThumbnailUtilities
 
             // Debug.Log($"SupersampleBuffer size: {supersampleBuffer.width}x{supersampleBuffer.height}");
 
-            GameObject renderer = Instantiate(thumbnailCreator.gameObject);
             var lastRT = RenderTexture.active;
+            GameObject renderer = Instantiate(thumbnailCreator.gameObject);
 
             try
             {
                 Camera cam = renderer.GetComponent<Camera>();
 
-                if (!selectedParams.Item3)
+                if (!selectedParams.allowAntialiasing)
                 {
                     if (renderer.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
                     {
@@ -123,6 +135,7 @@ namespace ThumbnailUtilities
                     }
 
                     cam.allowMSAA = false;
+                    supersampleBuffer.antiAliasing = 1;
                 }
 
                 cam.allowDynamicResolution = false;
@@ -131,7 +144,7 @@ namespace ThumbnailUtilities
 
                 var blitMat = new Material(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
                 {
-                    shaderKeywords = new string[] { selectedParams.Item2 }
+                    shaderKeywords = new string[] { selectedParams.blitterKeyword }
                 };
 
                 Graphics.Blit(supersampleBuffer, thumbnail, blitMat);
@@ -165,7 +178,7 @@ namespace ThumbnailUtilities
             {
                 r.SetPixels(r.GetPixels().Select(c => c.gamma).ToArray());
             }
-            
+
             return r;
         }
     }

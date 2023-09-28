@@ -35,10 +35,10 @@
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-            void vertexProgram (appdata_base v, out float4 vertex : SV_POSITION, out float2 uv : TEXCOORD0)
+            float4 vertexProgram (appdata_base v, out float2 uv : TEXCOORD0) : SV_POSITION
             {
-                vertex = UnityObjectToClipPos(v.vertex);
                 uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+                return UnityObjectToClipPos(v.vertex);
             }
 
             float4 fragmentProgram (float4 vertex : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target

@@ -3,7 +3,6 @@ using VRC.SDKBase;
 
 namespace ThumbnailUtilities
 {
-    //keep this enum in sync with the size and order of the QualityParams array in ThumbnailCreatorEditor
     public enum SSAAQuality
     {
         None,
