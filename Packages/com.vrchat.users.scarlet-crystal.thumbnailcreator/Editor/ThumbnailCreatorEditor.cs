@@ -93,8 +93,7 @@ namespace ThumbnailUtilities
             RenderTexture thumbnail = new RenderTexture(
                 new RenderTextureDescriptor(1200, 900)
                 {
-                    graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
-                    sRGB = true
+                    graphicsFormat = GraphicsFormat.R8G8B8A8_SRGB
                 }
             );
 
