@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.Rendering;
 
@@ -148,7 +146,10 @@ namespace ThumbnailUtilities
 
                 Graphics.Blit(supersampleBuffer, thumbnail, blitMat);
 
-                return ReadBackRenderTexture(thumbnail);
+                Texture2D result = new Texture2D(thumbnail.width, thumbnail.height, thumbnail.graphicsFormat, TextureCreationFlags.None);
+                result.ReadPixels(new Rect(0, 0, thumbnail.width, thumbnail.height), 0, 0, false);
+
+                return result;
             }
             finally
             {
@@ -158,27 +159,6 @@ namespace ThumbnailUtilities
                 thumbnail.Release();
                 supersampleBuffer.Release();
             }
-        }
-
-        private Texture2D ReadBackRenderTexture(RenderTexture target)
-        {
-            AsyncGPUReadbackRequest readbackRequest = AsyncGPUReadback.Request(target);
-            readbackRequest.WaitForCompletion();
-
-            if (readbackRequest.hasError)
-            {
-                throw new Exception("GPU Readback failed.");
-            }
-
-            Texture2D r = new Texture2D(target.width, target.height, target.graphicsFormat, TextureCreationFlags.None);
-            r.SetPixelData(readbackRequest.GetData<byte>(), 0);
-
-            if (!target.sRGB)
-            {
-                r.SetPixels(r.GetPixels().Select(c => c.gamma).ToArray());
-            }
-
-            return r;
         }
     }
 }
