@@ -4,7 +4,6 @@ using System.IO;
 
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
-using UnityEngine.Experimental.Rendering;
 
 using UnityEditor;
 
@@ -89,9 +88,9 @@ namespace ThumbnailUtilities
             var selectedParams = QualityPresets[thumbnailCreator.supersampleLevel];
 
             RenderTexture thumbnail = new RenderTexture(
-                new RenderTextureDescriptor(1200, 900)
+                new RenderTextureDescriptor(1200, 900, RenderTextureFormat.ARGB32)
                 {
-                    graphicsFormat = GraphicsFormat.R8G8B8A8_SRGB
+                    sRGB = true
                 }
             );
 
@@ -104,10 +103,9 @@ namespace ThumbnailUtilities
             }
 
             RenderTexture supersampleBuffer = new RenderTexture(
-                new RenderTextureDescriptor(supersampleWidth, supersampleHeight)
+                new RenderTextureDescriptor(supersampleWidth, supersampleHeight, RenderTextureFormat.ARGBHalf)
                 {
                     depthBufferBits = 32,
-                    graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
                     msaaSamples = 8
                 }
             )
@@ -146,7 +144,7 @@ namespace ThumbnailUtilities
 
                 Graphics.Blit(supersampleBuffer, thumbnail, blitMat);
 
-                Texture2D result = new Texture2D(thumbnail.width, thumbnail.height, thumbnail.graphicsFormat, TextureCreationFlags.None);
+                Texture2D result = new Texture2D(thumbnail.width, thumbnail.height, TextureFormat.ARGB32, false);
                 result.ReadPixels(new Rect(0, 0, thumbnail.width, thumbnail.height), 0, 0, false);
 
                 return result;
