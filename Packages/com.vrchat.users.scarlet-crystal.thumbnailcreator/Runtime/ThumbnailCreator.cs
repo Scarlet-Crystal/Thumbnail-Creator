@@ -18,6 +18,6 @@ namespace ThumbnailUtilities
         + "\nHigher levels will use more VRAM."
         + "\nNone will disable supersampling. Use this option if you wish to use MSAA or"
         + " postprocessing-based antialiasing instead.")]
-        public SSAAQuality supersampleLevel = SSAAQuality.Medium;
+        public SSAAQuality supersampleLevel = SSAAQuality.None;
     }
 }
