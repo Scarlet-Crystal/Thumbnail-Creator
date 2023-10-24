@@ -109,6 +109,15 @@ namespace ThumbnailUtilities
                     }
                 }
             }
+
+            EditorGUILayout.Space();
+
+            EditorGUILayout.HelpBox(
+                "If you see aliasing in the thumbnail, go to Edit > Project Settings > "
+                + "Quality and make sure that antialiasing is set to 8x Multisample. "
+                + "Alternatively, enable supersampling in the settings above.",
+                MessageType.Info
+            );
         }
 
         private Texture2D RenderThumbnail(ThumbnailCreator thumbnailCreator)
