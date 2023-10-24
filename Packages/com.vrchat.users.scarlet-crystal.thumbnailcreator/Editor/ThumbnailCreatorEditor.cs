@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 
 using UnityEngine;
-using UnityEngine.Rendering.PostProcessing;
-
 using UnityEditor;
+
+#if UNITY_POST_PROCESSING_STACK_V2
+using UnityEngine.Rendering.PostProcessing;
+#endif
+
 
 namespace ThumbnailUtilities
 {
@@ -39,15 +42,16 @@ namespace ThumbnailUtilities
         {
             var go = new GameObject("ThumbnailCreator", typeof(ThumbnailCreator)) { tag = "EditorOnly" };
 
-            var ppl = go.AddComponent<PostProcessLayer>();
-            ppl.enabled = false;
-            ppl.volumeLayer = -1;
-
             var cam = go.GetComponent<Camera>();
             cam.targetTexture = AssetDatabase.LoadAssetAtPath<RenderTexture>(
                 "Packages/com.vrchat.users.scarlet-crystal.thumbnailcreator/Editor/ThumbnailPreview.renderTexture"
             );
 
+#if UNITY_POST_PROCESSING_STACK_V2
+            var ppl = go.AddComponent<PostProcessLayer>();
+            ppl.enabled = false;
+            ppl.volumeLayer = -1;
+#endif
 
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
             Undo.RegisterCreatedObjectUndo(go, $"Create {go.name}");
@@ -124,10 +128,13 @@ namespace ThumbnailUtilities
 
                 if (!selectedParams.allowAntialiasing)
                 {
+
+#if UNITY_POST_PROCESSING_STACK_V2
                     if (renderer.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
                     {
                         postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.None;
                     }
+#endif
 
                     cam.allowMSAA = false;
                     supersampleBuffer.antiAliasing = 1;
