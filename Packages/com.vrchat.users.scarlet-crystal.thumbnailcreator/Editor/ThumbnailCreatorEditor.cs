@@ -86,8 +86,6 @@ namespace ThumbnailUtilities
         {
             DrawDefaultInspector();
 
-            var thumbnailCreator = target as ThumbnailCreator;
-
             if (GUILayout.Button("Render"))
             {
                 string savePath = EditorUtility.SaveFilePanel("Save Thumbnail", "", "Thumbnail.png", "png");
@@ -96,7 +94,7 @@ namespace ThumbnailUtilities
                 {
                     try
                     {
-                        Texture2D thumbnail = RenderThumbnail(thumbnailCreator);
+                        Texture2D thumbnail = RenderThumbnail(target as ThumbnailCreator);
 
                         File.WriteAllBytes(savePath, thumbnail.EncodeToPNG());
 
