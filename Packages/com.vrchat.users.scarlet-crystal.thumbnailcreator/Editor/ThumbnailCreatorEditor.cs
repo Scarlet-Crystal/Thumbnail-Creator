@@ -9,6 +9,9 @@ using UnityEditor;
 using UnityEngine.Rendering.PostProcessing;
 #endif
 
+#if UDON
+using VRC.SDK3.Components;
+#endif
 
 namespace ThumbnailUtilities
 {
@@ -51,6 +54,27 @@ namespace ThumbnailUtilities
             var ppl = go.AddComponent<PostProcessLayer>();
             ppl.enabled = false;
             ppl.volumeLayer = -1;
+#endif
+
+#if UDON
+            VRCSceneDescriptor sceneDescriptor = FindObjectOfType<VRCSceneDescriptor>();
+
+            if (sceneDescriptor.ReferenceCamera != null)
+            {
+                if (sceneDescriptor.ReferenceCamera.TryGetComponent<Camera>(out var refCam))
+                {
+                    cam.CopyFrom(refCam);
+                }
+
+#if UNITY_POST_PROCESSING_STACK_V2
+                if (sceneDescriptor.ReferenceCamera.TryGetComponent<PostProcessLayer>(out var refPPL))
+                {
+                    ppl.enabled = true;
+                    ppl.volumeLayer = refPPL.volumeLayer;
+                }
+#endif
+
+            }
 #endif
 
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
