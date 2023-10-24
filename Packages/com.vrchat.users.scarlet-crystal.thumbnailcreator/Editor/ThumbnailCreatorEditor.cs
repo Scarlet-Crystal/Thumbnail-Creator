@@ -102,7 +102,7 @@ namespace ThumbnailUtilities
                     }
                     catch (Exception)
                     {
-                        EditorUtility.DisplayDialog("Rendering Error", "Rendering failed, check the console for details.", "OK");
+                        EditorUtility.DisplayDialog("Rendering Error", "Rendering failed, check the console for details.", "Understood");
                         throw;
                     }
                 }
