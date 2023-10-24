@@ -46,6 +46,9 @@ namespace ThumbnailUtilities
             var go = new GameObject("ThumbnailCreator", typeof(ThumbnailCreator)) { tag = "EditorOnly" };
 
             var cam = go.GetComponent<Camera>();
+            cam.nearClipPlane = 0.01f;
+            cam.farClipPlane = 100f;
+
             cam.targetTexture = AssetDatabase.LoadAssetAtPath<RenderTexture>(
                 "Packages/com.vrchat.users.scarlet-crystal.thumbnailcreator/Editor/ThumbnailPreview.renderTexture"
             );
