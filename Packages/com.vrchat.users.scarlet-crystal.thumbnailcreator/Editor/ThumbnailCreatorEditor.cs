@@ -116,7 +116,8 @@ namespace ThumbnailUtilities
             EditorGUILayout.HelpBox(
                 "If you see aliasing in the thumbnail, go to Edit > Project Settings > "
                 + "Quality and make sure that antialiasing is set to 8x Multisample. "
-                + "Alternatively, enable supersampling in the settings above.",
+                + "Alternatively, enable supersampling in the settings above. "
+                + "Then re-render the thumbnail.",
                 MessageType.Info
             );
         }
