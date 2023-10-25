@@ -49,10 +49,6 @@ namespace ThumbnailUtilities
             cam.nearClipPlane = 0.01f;
             cam.farClipPlane = 100f;
 
-            cam.targetTexture = AssetDatabase.LoadAssetAtPath<RenderTexture>(
-                "Packages/com.vrchat.users.scarlet-crystal.thumbnailcreator/Editor/ThumbnailPreview.renderTexture"
-            );
-
 #if UNITY_POST_PROCESSING_STACK_V2
             var ppl = go.AddComponent<PostProcessLayer>();
             ppl.enabled = false;
@@ -80,6 +76,10 @@ namespace ThumbnailUtilities
             }
 #endif
 
+            cam.targetTexture = AssetDatabase.LoadAssetAtPath<RenderTexture>(
+                "Packages/com.vrchat.users.scarlet-crystal.thumbnailcreator/Editor/ThumbnailPreview.renderTexture"
+            );
+            
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
             Undo.RegisterCreatedObjectUndo(go, $"Create {go.name}");
             Selection.activeObject = go;
