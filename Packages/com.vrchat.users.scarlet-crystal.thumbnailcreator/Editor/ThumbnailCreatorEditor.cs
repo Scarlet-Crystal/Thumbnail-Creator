@@ -62,7 +62,7 @@ namespace ThumbnailUtilities
 #if UDON
             VRCSceneDescriptor sceneDescriptor = FindObjectOfType<VRCSceneDescriptor>();
 
-            if (sceneDescriptor.ReferenceCamera != null)
+            if (sceneDescriptor != null && sceneDescriptor.ReferenceCamera != null)
             {
                 if (sceneDescriptor.ReferenceCamera.TryGetComponent<Camera>(out var refCam))
                 {
