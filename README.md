@@ -8,7 +8,7 @@ This is a utility for creating thumnails for VRChat worlds and avatars. It offer
 # How to install
 
 1. To use this package, you will need the [VRChat Creator Companion](https://vcc.docs.vrchat.com).
-2. Go to https://scarlet-crystal.github.io/Thumbnail-Creator/ and click *Add to VCC.*
+2. Go to https://scarlet-crystal.github.io/VCC-Package-Listing/ and click *Add to VCC.*
 3. Go to the projects tab, click *Manage Project* for the project you wish to install this package to, then add the *Thumbnail Creator* package to your project.
 
 # How to use
