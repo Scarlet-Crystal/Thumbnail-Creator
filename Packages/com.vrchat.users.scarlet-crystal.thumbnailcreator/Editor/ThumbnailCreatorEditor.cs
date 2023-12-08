@@ -35,7 +35,7 @@ namespace ThumbnailUtilities
         private static readonly Dictionary<SSAAQuality, QualityParameters> QualityPresets = new Dictionary<SSAAQuality, QualityParameters>()
         {
             { SSAAQuality.None, new QualityParameters(1, "_SSAAx1", true) },
-            { SSAAQuality.Low, new QualityParameters(6, "_SSAAx36", false) },
+            { SSAAQuality.Low, new QualityParameters(4, "_SSAAx16", true) },
             { SSAAQuality.Medium, new QualityParameters(8, "_SSAAx64", false) },
             { SSAAQuality.High, new QualityParameters(12, "_SSAAx144", false) }
         };
