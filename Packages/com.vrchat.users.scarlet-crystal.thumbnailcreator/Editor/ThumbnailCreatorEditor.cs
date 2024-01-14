@@ -79,7 +79,7 @@ namespace ThumbnailUtilities
             cam.targetTexture = AssetDatabase.LoadAssetAtPath<RenderTexture>(
                 "Packages/com.vrchat.users.scarlet-crystal.thumbnailcreator/Editor/ThumbnailPreview.renderTexture"
             );
-            
+
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
             Undo.RegisterCreatedObjectUndo(go, $"Create {go.name}");
             Selection.activeObject = go;
@@ -88,6 +88,20 @@ namespace ThumbnailUtilities
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
+
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button(new GUIContent("Mirror scene view", "Copies certain properties of the scene view camera to the thumbnail camera, including position and rotation.")))
+            {
+                AlignWithSceneView(true);
+            }
+
+            if (GUILayout.Button(new GUIContent("Align with scene view", "Copies the scene view's position and rotation to the thumbnail camera.")))
+            {
+                AlignWithSceneView(false);
+            }
+
+            EditorGUILayout.EndHorizontal();
 
             if (GUILayout.Button("Render"))
             {
@@ -120,6 +134,49 @@ namespace ThumbnailUtilities
                 + "Then re-render the thumbnail.",
                 MessageType.Info
             );
+        }
+
+        private void AlignWithSceneView(bool copyCamera)
+        {
+            SceneView sceneView = SceneView.lastActiveSceneView;
+
+            if (sceneView == null)
+            {
+                Debug.LogWarning("Thumbnail Creator: Can't find last active scene view. Try opening a new scene window.");
+                return;
+            }
+
+            Camera sceneCamera = sceneView.camera;
+            ThumbnailCreator thumbnailCreator = target as ThumbnailCreator;
+            string undoName = copyCamera ? "Mirror scene view" : "Align with scene view";
+
+            Undo.RecordObject(thumbnailCreator.transform, undoName);
+
+            thumbnailCreator.transform.SetPositionAndRotation(
+                sceneCamera.transform.position,
+                sceneCamera.transform.rotation
+            );
+
+            PrefabUtility.RecordPrefabInstancePropertyModifications(thumbnailCreator.transform);
+
+            if (copyCamera)
+            {
+                Camera thumbnailCamera = thumbnailCreator.GetComponent<Camera>();
+
+                Undo.RecordObject(thumbnailCamera, undoName);
+
+                thumbnailCamera.usePhysicalProperties = false;
+
+                thumbnailCamera.orthographic = sceneCamera.orthographic;
+
+                thumbnailCamera.fieldOfView = sceneCamera.fieldOfView;
+                thumbnailCamera.orthographicSize = sceneCamera.orthographicSize;
+
+                thumbnailCamera.farClipPlane = sceneCamera.farClipPlane;
+                thumbnailCamera.nearClipPlane = sceneCamera.nearClipPlane;
+
+                PrefabUtility.RecordPrefabInstancePropertyModifications(thumbnailCamera);
+            }
         }
 
         private Texture2D RenderThumbnail(ThumbnailCreator thumbnailCreator)
