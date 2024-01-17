@@ -81,6 +81,8 @@ namespace ThumbnailUtilities
             );
 
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
+            GameObjectUtility.EnsureUniqueNameForSibling(go);
+
             Undo.RegisterCreatedObjectUndo(go, $"Create {go.name}");
             Selection.activeObject = go;
         }
