@@ -91,6 +91,14 @@ namespace ThumbnailUtilities
         {
             DrawDefaultInspector();
 
+            if (!QualityPresets[(target as ThumbnailCreator).supersampleLevel].allowAntialiasing)
+            {
+                EditorGUILayout.HelpBox(
+                    "MSAA and postprocessing antialiasing will be disabled when rendering at this level.",
+                    MessageType.Info
+                );
+            }
+
             EditorGUILayout.BeginHorizontal();
 
             bool mirrorClicked = GUILayout.Button(
