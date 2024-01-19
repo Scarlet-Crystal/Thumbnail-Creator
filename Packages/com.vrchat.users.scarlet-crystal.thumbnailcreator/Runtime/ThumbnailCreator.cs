@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using VRC.SDKBase;
 
 namespace ThumbnailUtilities
@@ -10,7 +11,7 @@ namespace ThumbnailUtilities
         Medium,
         High,
     }
-    
+
     [RequireComponent(typeof(Camera))]
     public class ThumbnailCreator : MonoBehaviour, IEditorOnly
     {
@@ -19,5 +20,13 @@ namespace ThumbnailUtilities
         + "\nNone will disable supersampling. Use this option if you wish to use MSAA or"
         + " postprocessing-based antialiasing instead.")]
         public SSAAQuality supersampleLevel = SSAAQuality.None;
+
+        void OnValidate()
+        {
+            if (!Enum.IsDefined(typeof(SSAAQuality), supersampleLevel))
+            {
+                supersampleLevel = SSAAQuality.None;
+            }
+        }
     }
 }
