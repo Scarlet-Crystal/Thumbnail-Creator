@@ -93,14 +93,30 @@ namespace ThumbnailUtilities
 
             EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button(new GUIContent("Mirror scene view", "Copies certain properties of the scene view camera to the thumbnail camera, including position and rotation.")))
-            {
-                AlignWithSceneView(true);
-            }
+            bool mirrorClicked = GUILayout.Button(
+                new GUIContent(
+                    "Mirror scene view",
+                    "Configure the thumbnail camera so that it matches the scene view as closely as possible."
+                )
+            );
 
-            if (GUILayout.Button(new GUIContent("Align with scene view", "Copies the scene view's position and rotation to the thumbnail camera.")))
+            bool alignClicked = GUILayout.Button(
+                new GUIContent(
+                    "Align with scene view",
+                    "Copies the scene view's position and rotation to the thumbnail camera."
+                )
+            );
+
+            if (mirrorClicked || alignClicked)
             {
-                AlignWithSceneView(false);
+                if (!TryAlignWithSceneView(mirrorClicked))
+                {
+                    EditorUtility.DisplayDialog(
+                        "Missing Scene View",
+                        "Can't find the last active scene view. Try opening a new scene window.",
+                        "Understood"
+                    );
+                }
             }
 
             EditorGUILayout.EndHorizontal();
@@ -138,14 +154,13 @@ namespace ThumbnailUtilities
             );
         }
 
-        private void AlignWithSceneView(bool copyCamera)
+        private bool TryAlignWithSceneView(bool copyCamera)
         {
             SceneView sceneView = SceneView.lastActiveSceneView;
 
             if (sceneView == null)
             {
-                Debug.LogWarning("Thumbnail Creator: Can't find last active scene view. Try opening a new scene window.");
-                return;
+                return false;
             }
 
             Camera sceneCamera = sceneView.camera;
@@ -179,6 +194,8 @@ namespace ThumbnailUtilities
 
                 PrefabUtility.RecordPrefabInstancePropertyModifications(thumbnailCamera);
             }
+
+            return true;
         }
 
         private Texture2D RenderThumbnail(ThumbnailCreator thumbnailCreator)
