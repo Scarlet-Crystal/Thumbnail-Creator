@@ -221,7 +221,6 @@ namespace ThumbnailUtilities
                 new RenderTextureDescriptor(supersampleWidth, supersampleHeight, RenderTextureFormat.ARGBHalf)
                 {
                     depthBufferBits = 32,
-                    msaaSamples = 8
                 }
             )
             {
@@ -248,11 +247,16 @@ namespace ThumbnailUtilities
 #endif
 
                     cam.allowMSAA = false;
-                    supersampleBuffer.antiAliasing = 1;
                 }
 
                 cam.allowDynamicResolution = false;
                 cam.targetTexture = supersampleBuffer;
+
+                if (cam.allowMSAA)
+                {
+                    supersampleBuffer.antiAliasing = 8;
+                }
+
                 cam.Render();
 
                 var blitMat = new Material(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
