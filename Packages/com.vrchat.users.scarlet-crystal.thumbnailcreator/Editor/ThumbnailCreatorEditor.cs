@@ -236,11 +236,15 @@ namespace ThumbnailUtilities
             {
                 Camera cam = renderer.GetComponent<Camera>();
 
+#if UNITY_POST_PROCESSING_STACK_V2
+                PostProcessLayer postProcessLayer = renderer.GetComponent<PostProcessLayer>();
+#endif
+
                 if (!selectedParams.allowAntialiasing)
                 {
 
 #if UNITY_POST_PROCESSING_STACK_V2
-                    if (renderer.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
+                    if (postProcessLayer != null)
                     {
                         postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.None;
                     }
@@ -257,7 +261,26 @@ namespace ThumbnailUtilities
                     supersampleBuffer.antiAliasing = 8;
                 }
 
+#if UNITY_POST_PROCESSING_STACK_V2
+                int renderCount = 1;
+
+                if (postProcessLayer != null
+                    && postProcessLayer.enabled
+                    && postProcessLayer.antialiasingMode == PostProcessLayer.Antialiasing.TemporalAntialiasing
+                )
+                {
+                    //Render the scene multiple times so that TAA can properly antialias the thumbnail
+                    renderCount = 300;
+                }
+
+                while (renderCount > 0)
+                {
+                    cam.Render();
+                    renderCount -= 1;
+                }
+#else
                 cam.Render();
+#endif
 
                 var blitMat = new Material(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
                 {
@@ -273,8 +296,8 @@ namespace ThumbnailUtilities
             }
             finally
             {
-                DestroyImmediate(renderer);
                 RenderTexture.active = lastRT;
+                DestroyImmediate(renderer);
 
                 thumbnail.Release();
                 supersampleBuffer.Release();
