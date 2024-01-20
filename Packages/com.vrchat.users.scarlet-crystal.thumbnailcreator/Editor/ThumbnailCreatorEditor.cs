@@ -177,18 +177,11 @@ namespace ThumbnailUtilities
             if (copyCamera)
             {
                 Camera thumbnailCamera = thumbnailCreator.GetComponent<Camera>();
-
                 Undo.RecordObject(thumbnailCamera, undoName);
 
-                thumbnailCamera.usePhysicalProperties = false;
-
-                thumbnailCamera.orthographic = sceneCamera.orthographic;
-
-                thumbnailCamera.fieldOfView = sceneCamera.fieldOfView;
-                thumbnailCamera.orthographicSize = sceneCamera.orthographicSize;
-
-                thumbnailCamera.farClipPlane = sceneCamera.farClipPlane;
-                thumbnailCamera.nearClipPlane = sceneCamera.nearClipPlane;
+                var targetTexture = thumbnailCamera.targetTexture;
+                thumbnailCamera.CopyFrom(sceneCamera);
+                thumbnailCamera.targetTexture = targetTexture;
 
                 PrefabUtility.RecordPrefabInstancePropertyModifications(thumbnailCamera);
             }
