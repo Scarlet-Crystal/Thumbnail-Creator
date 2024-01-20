@@ -251,13 +251,13 @@ namespace ThumbnailUtilities
                     cam.allowMSAA = false;
                 }
 
-                cam.allowDynamicResolution = false;
-                cam.targetTexture = supersampleBuffer;
-
                 if (cam.allowMSAA)
                 {
                     supersampleBuffer.antiAliasing = 8;
                 }
+
+                cam.allowDynamicResolution = false;
+                cam.targetTexture = supersampleBuffer;
 
 #if UNITY_POST_PROCESSING_STACK_V2
                 int renderCount = 1;
