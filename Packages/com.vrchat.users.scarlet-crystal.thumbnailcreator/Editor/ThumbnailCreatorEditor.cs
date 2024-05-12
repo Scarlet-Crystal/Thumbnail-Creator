@@ -261,7 +261,7 @@ namespace ThumbnailUtilities
                 )
                 {
                     //Render the scene multiple times so that TAA can properly antialias the thumbnail
-                    renderCount = 120;
+                    renderCount = 300;
                 }
 
                 while (renderCount > 0)
