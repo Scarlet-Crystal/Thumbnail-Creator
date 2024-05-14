@@ -1,9 +1,10 @@
 # What is this?
 
 This is a utility for creating thumnails for VRChat worlds and avatars. It offers the following advantages over the VRChat SDK's builtin thumbnail capture:
-- Can perform supersampled antialiasing
+- Can perform Ordered Grid Super-sampling
 - Can render thumbnails while in play mode
-- Can render thumbnails using [Temporal Antialiasing](https://docs.unity3d.com/Packages/com.unity.postprocessing@3.0/manual/Anti-aliasing.html#temporal-anti-aliasing-taa)
+- Can render thumbnails using [Temporal Antialiasing](https://docs.unity3d.com/Packages/com.unity.postprocessing@3.4/manual/Anti-aliasing.html#temporal-anti-aliasing-taa)
+- Saves thumbnails to disk, which allows for further editing
 
 # How to install
 
