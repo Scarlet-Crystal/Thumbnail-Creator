@@ -1,7 +1,7 @@
 # What is this?
 
 This is a utility for creating thumnails for VRChat worlds and avatars. It offers the following advantages over the VRChat SDK's builtin thumbnail capture:
-- Can perform Ordered Grid Super-sampling
+- Can perform Super-Sampled anti-aliasing
 - Can render thumbnails while in play mode
 - Saves thumbnails to disk, which allows for further editing
 
