@@ -6,12 +6,12 @@
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
         LOD 100
         
         Cull Off
         ZWrite Off
         ZTest Always
+        Blend One One
 
         Pass
         {
@@ -19,62 +19,60 @@
             
             #pragma vertex vertexProgram
             #pragma fragment fragmentProgram
-            #pragma target 3.5
-            #pragma multi_compile _SSAAx1 _SSAAx16 _SSAAx36 _SSAAx64 _SSAAx144
+            #pragma target 5.0
+            #pragma multi_compile_local _SIDE_LENGTH_1 _SIDE_LENGTH_2 _SIDE_LENGTH_4
 
             #include "UnityCG.cginc"
             
-            #if defined(_SSAAx144)
-                #define SIDE_LENGTH 12
-            #elif defined(_SSAAx64)
-                #define SIDE_LENGTH 8
-            #elif defined(_SSAAx36)
-                #define SIDE_LENGTH 6
-            #elif defined(_SSAAx16)
+            #if defined(_SIDE_LENGTH_4)
                 #define SIDE_LENGTH 4
-            #elif defined(_SSAAx1)
+
+            #elif defined(_SIDE_LENGTH_2)
+                #define SIDE_LENGTH 2
+
+            #elif defined(_SIDE_LENGTH_1)
                 #define SIDE_LENGTH 1
+
             #else
-                #error Unsupported SSAA level
+                #error Unsupported side length
+
             #endif
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
 
-            float4 vertexProgram (appdata_base v, out float2 uv : TEXCOORD0) : SV_POSITION
+            Texture2D _MainTex;
+            float4 _MainTex_TexelSize;
+
+            float4 vertexProgram (float4 v : POSITION) : SV_POSITION
             {
-                uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-                return UnityObjectToClipPos(v.vertex);
+                return UnityObjectToClipPos(v);
             }
 
-            float4 fragmentProgram (float4 vertex : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+            float4 fragmentProgram (float4 screenPos : SV_POSITION) : SV_Target
             {
-                float2 x = ddx(uv);
-                float2 y = ddy(uv);
-                float3 color = 0;
-                
-                const float doubleLength = SIDE_LENGTH * 2;
-                const int sideLengthMinusOne = SIDE_LENGTH - 1;
-                
-                int i = -sideLengthMinusOne;
-                [unroll(SIDE_LENGTH)] while (true)
+                //Check to make sure that the destination texture has the
+                // correct dimensions. 
+                if(any((_ScreenParams.xy * SIDE_LENGTH) != _MainTex_TexelSize.zw))
                 {
-                    float2 iOffset = (i / doubleLength) * x;
+                    //Dimensions are wrong, draw a checker board texture instead.
+                    float2 p = frac(floor(screenPos.xy / 32) / 2);
                     
-                    int j = -sideLengthMinusOne;
-                    [unroll(SIDE_LENGTH)] while (true)
+                    return (p.x == p.y) ? float4(0,1,1,1) : float4(0,0,0,1);
+                }
+
+
+                uint2 baseIndex = uint2(floor(screenPos.xy)) * SIDE_LENGTH;
+                
+                float4 color = 0;
+                                
+                [unroll] for(int y = 0; y < SIDE_LENGTH; y += 1)
+                {
+                    [unroll] for(int x = 0; x < SIDE_LENGTH; x += 1)
                     {
-                        float2 jOffset = (j / doubleLength) * y;
-                        
-                        color += saturate(tex2D(_MainTex, uv + iOffset + jOffset).rgb);
-                        
-                        j += 2;
+                        color += saturate(_MainTex[baseIndex + uint2(x, y)]);
                     }
-                    
-                    i += 2;
                 }
                 
-                return float4(color / float(SIDE_LENGTH * SIDE_LENGTH), 1);
+                return color / float(SIDE_LENGTH * SIDE_LENGTH);
             }
             
             ENDHLSL

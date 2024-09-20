@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.AnimatedValues;
 
 #if UNITY_POST_PROCESSING_STACK_V2
 using UnityEngine.Rendering.PostProcessing;
@@ -18,27 +21,69 @@ namespace ThumbnailUtilities
     [CustomEditor(typeof(ThumbnailCreator))]
     class ThumbnailCreatorEditor : Editor
     {
-        readonly struct QualityParameters
-        {
-            public readonly int renderScale;
-            public readonly string blitterKeyword;
-            public readonly bool allowAntialiasing;
+        const int ThumbnailWidth = 1200, ThumbnailHeight = 900;
 
-            public QualityParameters(int renderScale, string blitterKeyword, bool allowAntialiasing)
-            {
-                this.renderScale = renderScale;
-                this.blitterKeyword = blitterKeyword;
-                this.allowAntialiasing = allowAntialiasing;
-            }
-        }
+        SerializedProperty supersampleModeProperty,
+            resolutionScaleProperty,
+            jitteredSamplesProperty;
 
-        private static readonly Dictionary<SSAAQuality, QualityParameters> QualityPresets = new Dictionary<SSAAQuality, QualityParameters>()
+        AnimBool advancedFoldoutBool, otherAANoticeBool;
+
+        readonly Vector2[] x1SamplePositions =
         {
-            { SSAAQuality.None, new QualityParameters(1, "_SSAAx1", true) },
-            { SSAAQuality.Low, new QualityParameters(4, "_SSAAx16", true) },
-            { SSAAQuality.Medium, new QualityParameters(8, "_SSAAx64", false) },
-            { SSAAQuality.High, new QualityParameters(12, "_SSAAx144", false) }
+            Vector2.zero
         };
+
+        //MSAAx4 sample positions
+        readonly Vector2[] x4SamplePositions =
+        {
+            new(0.375f, 0.125f),
+            new(-0.125f, 0.375f),
+            new(0.125f, -0.375f),
+            new(-0.375f, -0.125f),
+        };
+
+        readonly Vector2[] x16SamplePositions =
+        {
+            new(-0.46875f, -0.21875f),
+            new(-0.40625f, 0.28125f),
+            new(-0.34375f, -0.46875f),
+            new(-0.28125f, 0.03125f),
+            new(-0.21875f, -0.09375f),
+            new(-0.15625f, 0.40625f),
+            new(-0.09375f, -0.34375f),
+            new(-0.03125f, 0.15625f),
+            new(0.03125f, -0.15625f),
+            new(0.09375f, 0.34375f),
+            new(0.15625f, -0.40625f),
+            new(0.21875f, 0.09375f),
+            new(0.28125f, -0.03125f),
+            new(0.34375f, 0.46875f),
+            new(0.40625f, -0.28125f),
+            new(0.46875f, 0.21875f),
+        };
+
+        //https://en.wikipedia.org/wiki/Low-discrepancy_sequence#Additive_recurrence
+        //https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+        private static IEnumerable<Vector2> AdditiveRecurrenceSequence(int amount)
+        {
+            double g = 1.32471795724474602596;
+
+            double a1 = 1 / g;
+            double a2 = 1 / (g * g);
+
+            double x = 0, y = 0;
+
+            for (int i = 0; i < amount; i += 1)
+            {
+                x = (x + a1) % 1;
+                y = (y + a2) % 1;
+
+                yield return new Vector2((float)(x - 0.5), (float)(y - 0.5));
+            }
+
+            yield break;
+        }
 
         [MenuItem("GameObject/Thumbnail Creator", priority = 10)]
         public static void CreateThumbnailCreator(MenuCommand menuCommand)
@@ -87,17 +132,70 @@ namespace ThumbnailUtilities
             Selection.activeObject = go;
         }
 
+        private bool IsOtherAADisallowed()
+        {
+            var ssmode = (SupersampleMode)supersampleModeProperty.intValue;
+
+            return ssmode switch
+            {
+                SupersampleMode.Off => false,
+                SupersampleMode.Advanced => jitteredSamplesProperty.intValue > 1,
+                _ => true
+            };
+        }
+
+        private bool IsAdvancedFoldoutVisable()
+        {
+            return supersampleModeProperty.intValue == (int)SupersampleMode.Advanced;
+        }
+
+        private void OnEnable()
+        {
+            supersampleModeProperty = serializedObject.FindProperty(nameof(ThumbnailCreator.supersampleMode));
+            resolutionScaleProperty = serializedObject.FindProperty(nameof(ThumbnailCreator.resolutionScale));
+            jitteredSamplesProperty = serializedObject.FindProperty(nameof(ThumbnailCreator.jitteredSamples));
+
+            advancedFoldoutBool = new AnimBool(IsAdvancedFoldoutVisable(), Repaint);
+            otherAANoticeBool = new AnimBool(IsOtherAADisallowed(), Repaint);
+        }
+
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
+            serializedObject.Update();
 
-            if (!QualityPresets[(target as ThumbnailCreator).supersampleLevel].allowAntialiasing)
+
+            EditorGUILayout.PropertyField(supersampleModeProperty);
+
+
+            advancedFoldoutBool.target = IsAdvancedFoldoutVisable();
+
+            if (EditorGUILayout.BeginFadeGroup(advancedFoldoutBool.faded))
+            {
+                EditorGUI.indentLevel++;
+
+                EditorGUILayout.PropertyField(resolutionScaleProperty);
+                EditorGUILayout.PropertyField(jitteredSamplesProperty);
+
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.EndFadeGroup();
+
+
+            EditorGUILayout.Space();
+
+            otherAANoticeBool.target = IsOtherAADisallowed();
+
+            if (EditorGUILayout.BeginFadeGroup(otherAANoticeBool.faded))
             {
                 EditorGUILayout.HelpBox(
-                    "MSAA and postprocessing antialiasing will be disabled when rendering at this level.",
+                    "MSAA and postprocessing anti-aliasing will be disabled when rendering in this mode.",
                     MessageType.Info
                 );
             }
+
+            EditorGUILayout.EndFadeGroup();
+
 
             EditorGUILayout.BeginHorizontal();
 
@@ -129,6 +227,7 @@ namespace ThumbnailUtilities
 
             EditorGUILayout.EndHorizontal();
 
+
             if (GUILayout.Button("Render"))
             {
                 string savePath = EditorUtility.SaveFilePanel("Save Thumbnail", "", "Thumbnail.png", "png");
@@ -137,11 +236,11 @@ namespace ThumbnailUtilities
                 {
                     try
                     {
-                        Texture2D thumbnail = RenderThumbnail(target as ThumbnailCreator);
-
-                        File.WriteAllBytes(savePath, thumbnail.EncodeToPNG());
-
-                        AssetDatabase.Refresh();
+                        if (TryRenderThumbnail(target as ThumbnailCreator, out Texture2D thumbnail))
+                        {
+                            File.WriteAllBytes(savePath, thumbnail.EncodeToPNG());
+                            AssetDatabase.Refresh();
+                        }
                     }
                     catch (Exception)
                     {
@@ -150,6 +249,9 @@ namespace ThumbnailUtilities
                     }
                 }
             }
+
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private bool TryAlignWithSceneView(bool copyCamera)
@@ -189,110 +291,196 @@ namespace ThumbnailUtilities
             return true;
         }
 
-        private Texture2D RenderThumbnail(ThumbnailCreator thumbnailCreator)
+        private bool TryRenderThumbnail(ThumbnailCreator thumbnailCreator, out Texture2D thumbnail)
         {
-            var selectedParams = QualityPresets[thumbnailCreator.supersampleLevel];
-
-            RenderTexture thumbnail = new RenderTexture(
-                new RenderTextureDescriptor(1200, 900, RenderTextureFormat.ARGB32)
-                {
-                    sRGB = true
-                }
+            ComputeRenderingParameters(
+                out int renderScale,
+                out int totalSamples,
+                out IEnumerable<Vector2> samplePoints
             );
 
-            int supersampleWidth = thumbnail.width * selectedParams.renderScale;
-            int supersampleHeight = thumbnail.height * selectedParams.renderScale;
-
-            if (supersampleWidth > SystemInfo.maxTextureSize || supersampleHeight > SystemInfo.maxTextureSize)
-            {
-                throw new Exception("Unable to allocate supersample buffer. Try using a lower supersample level.");
-            }
-
-            RenderTexture supersampleBuffer = new RenderTexture(
-                new RenderTextureDescriptor(supersampleWidth, supersampleHeight, RenderTextureFormat.ARGBHalf)
-                {
-                    depthBufferBits = 32,
-                }
-            )
-            {
-                filterMode = FilterMode.Point
-            };
-
-            // Debug.Log($"SupersampleBuffer size: {supersampleBuffer.width}x{supersampleBuffer.height}");
+            CreateRenderTextures(
+                renderScale,
+                out RenderTexture readPixelsBuffer,
+                out RenderTexture renderingBuffer,
+                out RenderTexture accumulationBuffer
+            );
 
             var lastRT = RenderTexture.active;
             GameObject renderer = Instantiate(thumbnailCreator.gameObject);
 
             try
             {
-                Camera cam = renderer.GetComponent<Camera>();
+                Camera cam = GetAndSetupCamera(
+                    renderer,
+                    renderingBuffer,
+                    out Matrix4x4 preJitteredMatrix
+                );
 
-#if UNITY_POST_PROCESSING_STACK_V2
-                PostProcessLayer postProcessLayer = renderer.GetComponent<PostProcessLayer>();
-#endif
-
-                if (!selectedParams.allowAntialiasing)
+                Material blitMat = new(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
                 {
-
-#if UNITY_POST_PROCESSING_STACK_V2
-                    if (postProcessLayer != null)
+                    shaderKeywords = new string[]
                     {
-                        postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.None;
+                        $"_SIDE_LENGTH_{renderScale.ToString(CultureInfo.InvariantCulture)}"
                     }
-#endif
-
-                    cam.allowMSAA = false;
-                }
-
-                if (cam.allowMSAA)
-                {
-                    supersampleBuffer.antiAliasing = 8;
-                }
-
-                cam.allowDynamicResolution = false;
-                cam.targetTexture = supersampleBuffer;
-
-#if UNITY_POST_PROCESSING_STACK_V2
-                int renderCount = 1;
-
-                if (postProcessLayer != null
-                    && postProcessLayer.enabled
-                    && postProcessLayer.antialiasingMode == PostProcessLayer.Antialiasing.TemporalAntialiasing
-                )
-                {
-                    //Render the scene multiple times so that TAA can properly antialias the thumbnail
-                    renderCount = 300;
-                }
-
-                while (renderCount > 0)
-                {
-                    cam.Render();
-                    renderCount -= 1;
-                }
-#else
-                cam.Render();
-#endif
-
-                var blitMat = new Material(Shader.Find("ThumbnailCreator/DownsamplingBlitter"))
-                {
-                    shaderKeywords = new string[] { selectedParams.blitterKeyword }
                 };
 
-                Graphics.Blit(supersampleBuffer, thumbnail, blitMat);
 
-                Texture2D result = new Texture2D(thumbnail.width, thumbnail.height, TextureFormat.ARGB32, false);
-                result.ReadPixels(new Rect(0, 0, thumbnail.width, thumbnail.height), 0, 0, false);
+                Graphics.Blit(Texture2D.blackTexture, accumulationBuffer);
 
-                return result;
+                int count = 0;
+                foreach (var sample in samplePoints)
+                {
+                    bool shouldAbort = EditorUtility.DisplayCancelableProgressBar(
+                        "Rendering Thumbnail",
+                        $"Rendering sample {count + 1} of {totalSamples}...",
+                        count / (float)totalSamples
+                    );
+
+                    if (shouldAbort)
+                    {
+                        thumbnail = null;
+                        return false;
+                    }
+
+                    cam.projectionMatrix = Matrix4x4.Translate(sample) * preJitteredMatrix;
+                    cam.Render();
+
+                    Graphics.Blit(renderingBuffer, accumulationBuffer, blitMat);
+
+                    count += 1;
+                }
+
+                renderingBuffer.Release();
+
+
+                blitMat = new Material(Shader.Find("ThumbnailCreator/ResolveBlitter"));
+                blitMat.SetFloat("_JitteredSampleCount", totalSamples);
+
+                Graphics.Blit(accumulationBuffer, readPixelsBuffer, blitMat);
+
+                thumbnail = new Texture2D(readPixelsBuffer.width, readPixelsBuffer.height, TextureFormat.ARGB32, false);
+                thumbnail.ReadPixels(new Rect(0, 0, readPixelsBuffer.width, readPixelsBuffer.height), 0, 0, false);
+
+                return true;
             }
             finally
             {
                 RenderTexture.active = lastRT;
                 DestroyImmediate(renderer);
 
-                thumbnail.Release();
-                supersampleBuffer.Release();
+                readPixelsBuffer.Release();
+                renderingBuffer.Release();
+                accumulationBuffer.Release();
+
+                EditorUtility.ClearProgressBar();
             }
+        }
+
+        private void ComputeRenderingParameters(
+            out int renderScale,
+            out int totalSamplePoints,
+            out IEnumerable<Vector2> samplePoints
+        )
+        {
+            var mode = (SupersampleMode)supersampleModeProperty.intValue;
+
+            Tuple<ResolutionScale, JitteredSampleCount> scaleAndSampleCount = mode switch
+            {
+                SupersampleMode.Off => new(ResolutionScale.m_1, JitteredSampleCount.None),
+                SupersampleMode.Low => new(ResolutionScale.m_2, JitteredSampleCount.m_16),
+                SupersampleMode.High => new(ResolutionScale.m_4, JitteredSampleCount.m_64),
+                _ => new(
+                        (ResolutionScale)resolutionScaleProperty.intValue,
+                        (JitteredSampleCount)jitteredSamplesProperty.intValue
+                    )
+            };
+
+            renderScale = Mathf.Max(1, (int)scaleAndSampleCount.Item1);
+            totalSamplePoints = Mathf.Max(1, (int)scaleAndSampleCount.Item2);
+
+            float halfWidth = (ThumbnailWidth * renderScale) / 2f;
+            float halfHeight = (ThumbnailHeight * renderScale) / 2f;
+
+            samplePoints = scaleAndSampleCount.Item2 switch
+            {
+                JitteredSampleCount.None => x1SamplePositions,
+                JitteredSampleCount.m_4 => x4SamplePositions,
+                JitteredSampleCount.m_16 => x16SamplePositions,
+                _ => AdditiveRecurrenceSequence(totalSamplePoints),
+            };
+
+            samplePoints = samplePoints.Select(v => new Vector2(v.x / halfWidth, v.y / halfHeight));
+        }
+
+        private void CreateRenderTextures(
+            int renderScale,
+            out RenderTexture readPixelsBuffer,
+            out RenderTexture renderingBuffer,
+            out RenderTexture accumulationBuffer
+        )
+        {
+            int renderWidth = ThumbnailWidth * renderScale;
+            int renderHeight = ThumbnailHeight * renderScale;
+
+            if (renderWidth > SystemInfo.maxTextureSize || renderHeight > SystemInfo.maxTextureSize)
+            {
+                throw new Exception("Unable to allocate rendering buffer. Try using a lower resolution scale.");
+            }
+
+            readPixelsBuffer = new RenderTexture(
+                new RenderTextureDescriptor(ThumbnailWidth, ThumbnailHeight, RenderTextureFormat.ARGB32)
+                {
+                    sRGB = true
+                }
+            );
+
+            accumulationBuffer = new RenderTexture(ThumbnailWidth, ThumbnailHeight, 0)
+            {
+                format = RenderTextureFormat.ARGBFloat,
+                filterMode = FilterMode.Point,
+            };
+
+            renderingBuffer = new RenderTexture(renderWidth, renderHeight, 32)
+            {
+                format = RenderTextureFormat.ARGBHalf,
+                filterMode = FilterMode.Point,
+            };
+        }
+
+        private Camera GetAndSetupCamera(GameObject renderer, RenderTexture renderingBuffer, out Matrix4x4 preJitteredProjectionMatrix)
+        {
+            Camera cam = renderer.GetComponent<Camera>();
+
+            preJitteredProjectionMatrix = cam.projectionMatrix;
+            cam.nonJitteredProjectionMatrix = preJitteredProjectionMatrix;
+            cam.useJitteredProjectionMatrixForTransparentRendering = true;
+
+            if (IsOtherAADisallowed())
+            {
+
+#if UNITY_POST_PROCESSING_STACK_V2
+                if (cam.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
+                {
+                    postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.None;
+                }
+#endif
+
+                cam.allowMSAA = false;
+            }
+
+            if (cam.clearFlags != CameraClearFlags.Skybox && cam.clearFlags != CameraClearFlags.SolidColor)
+            {
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+            }
+
+            renderingBuffer.antiAliasing = cam.allowMSAA ? 8 : 1;
+
+            cam.allowDynamicResolution = false;
+            cam.targetTexture = renderingBuffer;
+
+            return cam;
         }
     }
 }
