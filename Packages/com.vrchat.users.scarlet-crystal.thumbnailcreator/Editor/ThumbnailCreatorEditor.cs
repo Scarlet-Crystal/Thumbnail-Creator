@@ -8,11 +8,11 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 
-#if UNITY_POST_PROCESSING_STACK_V2
+#if POSTPROCESSING_STACK_V2_INSTALLED
 using UnityEngine.Rendering.PostProcessing;
 #endif
 
-#if UDON
+#if WORLDS_VRCSDK_INSTALLED
 using VRC.SDK3.Components;
 #endif
 
@@ -94,13 +94,13 @@ namespace ThumbnailUtilities
             cam.nearClipPlane = 0.01f;
             cam.farClipPlane = 100f;
 
-#if UNITY_POST_PROCESSING_STACK_V2
+#if POSTPROCESSING_STACK_V2_INSTALLED
             var ppl = go.AddComponent<PostProcessLayer>();
             ppl.enabled = false;
             ppl.volumeLayer = -1;
 #endif
 
-#if UDON
+#if WORLDS_VRCSDK_INSTALLED
             VRCSceneDescriptor sceneDescriptor = FindObjectOfType<VRCSceneDescriptor>();
 
             if (sceneDescriptor != null && sceneDescriptor.ReferenceCamera != null)
@@ -110,7 +110,7 @@ namespace ThumbnailUtilities
                     cam.CopyFrom(refCam);
                 }
 
-#if UNITY_POST_PROCESSING_STACK_V2
+#if POSTPROCESSING_STACK_V2_INSTALLED
                 if (sceneDescriptor.ReferenceCamera.TryGetComponent<PostProcessLayer>(out var refPPL))
                 {
                     ppl.enabled = true;
@@ -459,7 +459,7 @@ namespace ThumbnailUtilities
             if (IsOtherAADisallowed())
             {
 
-#if UNITY_POST_PROCESSING_STACK_V2
+#if POSTPROCESSING_STACK_V2_INSTALLED
                 if (cam.TryGetComponent<PostProcessLayer>(out var postProcessLayer))
                 {
                     postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.None;

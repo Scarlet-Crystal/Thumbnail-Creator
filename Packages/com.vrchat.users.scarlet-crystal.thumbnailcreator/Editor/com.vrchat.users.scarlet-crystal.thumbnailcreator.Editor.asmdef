@@ -1,5 +1,6 @@
 {
     "name": "com.vrchat.users.scarlet-crystal.thumbnailcreator.Editor",
+    "rootNamespace": "",
     "references": [
         "GUID:130c48e55d4d25340a585c78cee73106",
         "GUID:d60799ab2a985554ea1a39cd38695018"
@@ -13,6 +14,17 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.postprocessing",
+            "expression": "[3.4,4)",
+            "define": "POSTPROCESSING_STACK_V2_INSTALLED"
+        },
+        {
+            "name": "com.vrchat.worlds",
+            "expression": "[3.7,3.8)",
+            "define": "WORLDS_VRCSDK_INSTALLED"
+        }
+    ],
     "noEngineReferences": false
 }
