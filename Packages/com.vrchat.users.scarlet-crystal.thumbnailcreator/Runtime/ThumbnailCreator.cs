@@ -45,7 +45,7 @@ namespace ThumbnailUtilities
             "The scale to render the thumbnail at. " +
             "After rendering the thumbnail will be scaled down to the proper size."
         )]
-        public ResolutionScale resolutionScale = ResolutionScale.m_2;
+        public ResolutionScale resolutionScale = ResolutionScale.m_4;
 
         [Tooltip(
             "The amount of jittered samples to render. For each jittered sample, " +
@@ -53,13 +53,13 @@ namespace ThumbnailUtilities
             "The resulting renders are then combined to produce a single, anti-aliased image. \n" +
             "Setting this to none will allow you to use MSAA and postprocessing anti-aliasing."
         )]
-        public JitteredSampleCount jitteredSamples = JitteredSampleCount.m_16;
+        public JitteredSampleCount jitteredSamples = JitteredSampleCount.m_4;
 
         void OnValidate()
         {
             ValidateEnum(ref supersampleMode, SupersampleMode.Low);
-            ValidateEnum(ref resolutionScale, ResolutionScale.m_2);
-            ValidateEnum(ref jitteredSamples, JitteredSampleCount.m_16);
+            ValidateEnum(ref resolutionScale, ResolutionScale.m_4);
+            ValidateEnum(ref jitteredSamples, JitteredSampleCount.m_4);
         }
 
         private void ValidateEnum<T>(ref T value, T defaultValue) where T : Enum

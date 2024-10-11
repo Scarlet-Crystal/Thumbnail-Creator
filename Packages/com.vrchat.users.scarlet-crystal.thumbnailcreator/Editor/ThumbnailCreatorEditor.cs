@@ -388,8 +388,8 @@ namespace ThumbnailUtilities
             Tuple<ResolutionScale, JitteredSampleCount> scaleAndSampleCount = mode switch
             {
                 SupersampleMode.Off => new(ResolutionScale.m_1, JitteredSampleCount.None),
-                SupersampleMode.Low => new(ResolutionScale.m_2, JitteredSampleCount.m_16),
-                SupersampleMode.High => new(ResolutionScale.m_4, JitteredSampleCount.m_64),
+                SupersampleMode.Low => new(ResolutionScale.m_4, JitteredSampleCount.m_4),
+                SupersampleMode.High => new(ResolutionScale.m_4, JitteredSampleCount.m_256),
                 _ => new(
                         (ResolutionScale)resolutionScaleProperty.intValue,
                         (JitteredSampleCount)jitteredSamplesProperty.intValue
