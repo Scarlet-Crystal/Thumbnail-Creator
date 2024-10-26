@@ -311,6 +311,8 @@ namespace ThumbnailUtilities
 
             try
             {
+                renderer.hideFlags = HideFlags.DontSave;
+
                 Camera cam = GetAndSetupCamera(
                     renderer,
                     renderingBuffer,
